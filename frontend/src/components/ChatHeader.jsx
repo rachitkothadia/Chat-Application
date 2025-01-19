@@ -13,7 +13,11 @@ const ChatHeader = () => {
           {/* Avatar */}
           <div className="avatar">
             <div className="size-10 rounded-full relative">
-              <img src={selectedUser.profilePic || "/avatar.png"} alt={selectedUser.fullName} />
+            <img
+              src={selectedUser.profilePic || "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736102383/lol_crop2_tfvbgh.png"}
+              onError={(e) => (e.target.src = "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736102383/lol_crop2_tfvbgh.png")}
+              alt={selectedUser.fullName || "Default Profile Picture"}
+            />
             </div>
           </div>
 

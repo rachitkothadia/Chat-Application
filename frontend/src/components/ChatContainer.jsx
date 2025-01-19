@@ -56,14 +56,11 @@ const ChatContainer = () => {
           >
             <div className=" chat-image avatar">
               <div className="size-10 rounded-full border">
-                <img
-                  src={
-                    message.senderId === authUser._id
-                      ? authUser.profilePic || "/avatar.png"
-                      : selectedUser.profilePic || "/avatar.png"
-                  }
-                  alt="profile pic"
-                />
+              <img
+                src={selectedUser.profilePic || "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736102383/lol_crop2_tfvbgh.png"}
+                onError={(e) => (e.target.src = "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736102383/lol_crop2_tfvbgh.png")}
+                alt={selectedUser.fullName || "Default Profile Picture"}
+              />
               </div>
             </div>
             <div className="chat-header mb-1">

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import AuthImagePattern from "../components/AuthImagePattern";
 import { Link } from "react-router-dom";
-import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,11 +25,16 @@ const LoginPage = () => {
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
-              <div
-                className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20
-              transition-colors"
-              >
-                <MessageSquare className="w-6 h-6 text-primary" />
+            <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+                <img
+                  src="/SecureChat Logo.png"
+                  alt="SecureChat Logo"
+                  className="w-11 h-11"
+                  onError={(e) => { 
+                    e.currentTarget.src = "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736620593/SecureChat_Logo_ntx47p.png";
+                    e.currentTarget.onerror = null; // Prevent infinite loop if Cloudinary URL also fails
+                  }}
+                />
               </div>
               <h1 className="text-2xl font-bold mt-2">Welcome Back</h1>
               <p className="text-base-content/60">Sign in to your account</p>
@@ -67,7 +72,7 @@ const LoginPage = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   className={`input input-bordered w-full pl-10`}
-                  placeholder="••••••••"
+                  placeholder="Must be at least 6 characters"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
@@ -109,7 +114,7 @@ const LoginPage = () => {
       </div>
 
       {/* Right Side - Image/Pattern */}
-      <AuthImagePattern
+      <AuthImagePattern 
         title={"Welcome back!"}
         subtitle={"Sign in to continue your conversations and catch up with your messages."}
       />
