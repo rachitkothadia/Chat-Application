@@ -20,6 +20,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    flagged: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    banned: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

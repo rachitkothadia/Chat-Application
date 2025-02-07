@@ -44,7 +44,7 @@ const SignUpPage = () => {
             <div className="flex flex-col items-center gap-2 group mt-12">
               <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
                 <img
-                  src="public/SecureChat Logo.png"
+                  src="SecureChat Logo.png"
                   alt="SecureChat Logo"
                   className="w-11 h-11"
                   onError={(e) => {
