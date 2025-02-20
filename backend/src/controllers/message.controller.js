@@ -1,8 +1,9 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+import { isUserSuspended, updateUserSuspension } from "../lib/db.js";
+import axios from "axios";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -41,6 +42,12 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
+    // 🚨 Step 1: Check if sender is suspended
+    const isSuspended = await isUserSuspended(senderId);
+    if (isSuspended) {
+      return res.status(403).json({ error: "You are temporarily suspended from sending messages." });
+    }
+
     let imageUrl;
     if (image) {
       // Upload base64 image to cloudinary
@@ -48,6 +55,19 @@ export const sendMessage = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
+    // 🚨 Step 2: Check message for inappropriate content using ML API
+    const response = await axios.post("http://localhost:5001/predict", { message: text });
+
+    if (response.data.prediction === -1) {
+      console.log(`🚨 Message from ${senderId} flagged as inappropriate.`);
+
+      // 🚨 Step 3: Apply suspension
+      await updateUserSuspension(senderId);
+
+      return res.status(403).json({ error: "Message flagged as inappropriate. You may be suspended." });
+    }
+
+    // 🚨 Step 4: Save and send message if it's safe
     const newMessage = new Message({
       senderId,
       receiverId,
