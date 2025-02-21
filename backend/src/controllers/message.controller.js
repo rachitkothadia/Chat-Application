@@ -1,8 +1,8 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+import axios from "axios"; // For calling ML API
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -46,6 +46,30 @@ export const sendMessage = async (req, res) => {
       // Upload base64 image to cloudinary
       const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
+    }
+
+    // Call ML API to check for inappropriate content
+    const mlResponse = await axios.post("http://localhost:5000/predict", { text });
+    const isHarmful = mlResponse.data.isHarmful;
+
+    if (isHarmful) {
+      const user = await User.findById(senderId);
+      user.flagged += 1;
+
+      if (user.flagged === 1) {
+        user.suspensionExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min ban
+      } else if (user.flagged === 2) {
+        user.suspensionExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour ban
+      } else if (user.flagged === 3) {
+        user.suspensionExpiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000); // 5 hour ban
+      } else if (user.flagged === 4) {
+        user.suspensionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hour ban
+      } else if (user.flagged >= 5) {
+        user.banned = true; // Permanent ban
+      }
+
+      await user.save();
+      return res.status(403).json({ message: "You have been banned for inappropriate messages." });
     }
 
     const newMessage = new Message({

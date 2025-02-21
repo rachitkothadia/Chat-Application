@@ -21,6 +21,18 @@ export const protectRoute = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Check if user is banned
+    if (user.banned) {
+      if (user.suspensionExpiresAt && new Date() > user.suspensionExpiresAt) {
+        // Auto-unban if suspension time is over
+        user.banned = false;
+        user.suspensionExpiresAt = null;
+        await user.save();
+      } else {
+        return res.status(403).json({ message: "You are banned from accessing this service." });
+      }
+    }
+
     req.user = user;
 
     next();

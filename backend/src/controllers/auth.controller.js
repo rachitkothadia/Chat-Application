@@ -6,38 +6,27 @@ import cloudinary from "../lib/cloudinary.js";
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
   try {
-    // Check if all fields are provided
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Validate password length
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    // Check if the email already exists
     const user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // Hash password 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create new user object
-    const newUser = new User({
-      fullName,
-      email,
-      password: hashedPassword,
-    });
+    const newUser = new User({ fullName, email, password: hashedPassword });
 
-    // Save the new user and generate token after saving
     await newUser.save();
-    generateToken(newUser._id, res); // Generate JWT token after saving the user
+    generateToken(newUser._id, res);
 
-    // Send the response with user details
     res.status(201).json({
       _id: newUser._id,
       fullName: newUser.fullName,
@@ -53,22 +42,31 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Find the user by email
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Compare the password
+    // Check if the user is banned
+    if (user.banned && user.suspensionExpiresAt) {
+      if (new Date() < user.suspensionExpiresAt) {
+        return res.status(403).json({ message: "You are banned. Try again later." });
+      } else {
+        // Unban user if the suspension period is over
+        user.banned = false;
+        user.suspensionExpiresAt = null;
+        await user.save();
+      }
+    }
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT token for valid user
     generateToken(user._id, res);
 
-    // Send response with user details
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
@@ -83,7 +81,6 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    // Clear the JWT cookie on logout
     res.cookie("jwt", "", { maxAge: 0 });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
@@ -97,22 +94,18 @@ export const updateProfile = async (req, res) => {
     const { profilePic } = req.body;
     const userId = req.user._id;
 
-    // Validate profile picture input
     if (!profilePic) {
       return res.status(400).json({ message: "Profile pic is required" });
     }
 
-    // Upload profile picture to Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(profilePic);
     
-    // Update the user's profile with the new picture URL
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profilePic: uploadResponse.secure_url },
       { new: true }
     );
 
-    // Respond with updated user data
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("Error in update profile:", error.message);
@@ -122,7 +115,6 @@ export const updateProfile = async (req, res) => {
 
 export const checkAuth = (req, res) => {
   try {
-    // Return the authenticated user's details
     res.status(200).json(req.user);
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
