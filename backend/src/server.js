@@ -3,7 +3,7 @@ import User from "./models/user.model.js";
 import Message from "./models/message.model.js";
 import { io, getReceiverSocketId } from "./lib/socket.js";
 
-const ML_API_URL = process.env.ML_API_URL || "https://your-ml-api.onrender.com/predict";
+const ML_API_URL = process.env.ML_API_URL || "https://your-correct-ml-api.onrender.com/predict";
 
 // Function to check messages with ML API
 export async function checkMessageWithML(text) {
@@ -21,7 +21,7 @@ export async function updateBanStatus(userId) {
   const user = await User.findById(userId);
   if (!user) return null;
 
-  // If already banned, prevent re-banning
+  // Prevent re-banning if already banned
   if (user.isBanned && user.banExpires && new Date(user.banExpires) > new Date()) {
     return null;
   }
@@ -43,25 +43,22 @@ export async function updateBanStatus(userId) {
 io.on("connection", (socket) => {
   socket.on("sendMessage", async ({ senderId, receiverId, text }) => {
     try {
-      const isHarmful = await checkMessageWithML(text);
+      // Save the message immediately before checking for harmful content
+      const newMessage = new Message({ senderId, receiverId, text });
+      await newMessage.save();
 
+      // Send message to the receiver's socket
+      const receiverSocketId = getReceiverSocketId(receiverId);
+      if (receiverSocketId) io.to(receiverSocketId).emit("newMessage", newMessage);
+
+      // Now check if the message is harmful
+      const isHarmful = await checkMessageWithML(text);
       if (isHarmful) {
         const banDuration = await updateBanStatus(senderId);
-
         if (banDuration) {
           socket.emit("banned", { duration: banDuration });
           console.log(`User ${senderId} banned for ${banDuration} minutes.`);
         }
-      }
-
-      // Save message only if user is NOT banned
-      const sender = await User.findById(senderId);
-      if (!sender.isBanned) {
-        const newMessage = new Message({ senderId, receiverId, text });
-        await newMessage.save();
-
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) io.to(receiverSocketId).emit("newMessage", newMessage);
       }
     } catch (error) {
       console.error("Error handling message:", error.message);
