@@ -11,7 +11,8 @@ const io = new Server(server, {
   cors: { origin: ["http://localhost:5173"] },
 });
 
-const userSocketMap = {}; // {userId: socketId}
+// 🔥 Store online users { userId: socketId }
+const userSocketMap = {};
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
@@ -21,23 +22,27 @@ io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    console.log("User Online:", userId);
+  }
 
+  // ✅ Emit updated online users list
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  // **Listen for messages**
+  // 🔴 Handle message sending with ML moderation
   socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
     try {
-      // ❌ 1. Check if the user is suspended
+      // ❌ 1. Check if sender is suspended
       if (await isUserSuspended(senderId)) {
         io.to(socket.id).emit("messageBlocked", { reason: "You are currently suspended." });
         return;
       }
 
-      // ✅ 2. Send message to Python API for classification
+      // ✅ 2. Send message to ML model for filtering
       const response = await axios.post("http://localhost:5001/predict", { message });
 
-      // ❌ 3. If message is inappropriate, suspend user
+      // ❌ 3. If message is inappropriate, suspend sender
       if (response.data.prediction === -1) {
         console.log(`🚨 Inappropriate message detected from ${senderId}`);
         await updateUserSuspension(senderId);
@@ -45,17 +50,25 @@ io.on("connection", (socket) => {
         return;
       }
 
-      // ✅ 4. Broadcast message if it's safe
+      // ✅ 4. Send message if it's safe
       const receiverSocketId = getReceiverSocketId(receiverId);
-      if (receiverSocketId) io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
+      }
     } catch (error) {
       console.error("Error checking message:", error);
     }
   });
 
+  // 🔴 Handle disconnect
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
-    delete userSocketMap[userId];
+
+    // ✅ Remove user from online list
+    const disconnectedUser = Object.keys(userSocketMap).find((key) => userSocketMap[key] === socket.id);
+    if (disconnectedUser) delete userSocketMap[disconnectedUser];
+
+    console.log("Updated Online Users:", Object.keys(userSocketMap));
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
