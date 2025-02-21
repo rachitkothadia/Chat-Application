@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
-import Suspension from "../models/suspension.model.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
@@ -22,22 +21,8 @@ export const protectRoute = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if user is permanently banned
-    if (user.banned) {
-      return res.status(403).json({ message: "Access Denied - You are permanently banned" });
-    }
-
-    // Check if user is temporarily suspended
-    const suspension = await Suspension.findOne({ userId: user._id });
-
-    if (suspension && new Date() < suspension.suspensionEndTime) {
-      return res.status(403).json({
-        message: "Access Denied - You are temporarily suspended",
-        suspensionEndTime: suspension.suspensionEndTime,
-      });
-    }
-
     req.user = user;
+
     next();
   } catch (error) {
     console.log("Error in protectRoute middleware: ", error.message);
