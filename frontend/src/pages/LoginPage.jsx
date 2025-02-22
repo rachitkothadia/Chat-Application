@@ -10,11 +10,16 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
+
   const { login, isLoggingIn } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    login(formData);
+    if (isLoggingIn) return; // Prevent multiple submissions
+    login({
+      email: formData.email.trim(),
+      password: formData.password.trim(),
+    });
   };
 
   return (
@@ -25,13 +30,14 @@ const LoginPage = () => {
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
-            <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+              <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
                 <img
                   src="/SecureChat Logo.png"
                   alt="SecureChat Logo"
                   className="w-11 h-11"
-                  onError={(e) => { 
-                    e.currentTarget.src = "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736620593/SecureChat_Logo_ntx47p.png";
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736620593/SecureChat_Logo_ntx47p.png";
                     e.currentTarget.onerror = null; // Prevent infinite loop if Cloudinary URL also fails
                   }}
                 />
@@ -53,10 +59,13 @@ const LoginPage = () => {
                 </div>
                 <input
                   type="email"
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="you@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  required
                 />
               </div>
             </div>
@@ -71,15 +80,20 @@ const LoginPage = () => {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="Must be at least 6 characters"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  autoComplete="current-password"
+                  required
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-base-content/40" />
@@ -90,7 +104,11 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full" disabled={isLoggingIn}>
+            <button
+              type="submit"
+              className="btn btn-primary w-full"
+              disabled={isLoggingIn}
+            >
               {isLoggingIn ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -114,11 +132,14 @@ const LoginPage = () => {
       </div>
 
       {/* Right Side - Image/Pattern */}
-      <AuthImagePattern 
+      <AuthImagePattern
         title={"Welcome back!"}
-        subtitle={"Sign in to continue your conversations and catch up with your messages."}
+        subtitle={
+          "Sign in to continue your conversations and catch up with your messages."
+        }
       />
     </div>
   );
 };
+
 export default LoginPage;

@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { Link } from "react-router-dom";
-
 import AuthImagePattern from "../components/AuthImagePattern";
 import toast from "react-hot-toast";
- 
+
 const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,22 +15,37 @@ const SignUpPage = () => {
 
   const { signup, isSigningUp } = useAuthStore();
 
+  // Debugging log to check if signup is correctly initialized
+  console.log("Signup function:", signup);
+
   const validateForm = () => {
     if (!formData.fullName.trim()) return toast.error("Full name is required");
     if (!formData.email.trim()) return toast.error("Email is required");
     if (!/\S+@\S+\.\S+/.test(formData.email)) return toast.error("Invalid email format");
     if (!formData.password) return toast.error("Password is required");
     if (formData.password.length < 6) return toast.error("Password must be at least 6 characters");
-   
+
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const success = validateForm();
+    if (typeof signup !== "function") {
+      console.error("Signup function is not available");
+      return toast.error("Signup function is not available.");
+    }
 
-    if (success === true) signup(formData);
+    const success = validateForm();
+    if (success !== true) return;
+
+    try {
+      await signup(formData);
+      toast.success("Account created successfully!");
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("Signup failed. Please try again.");
+    }
   };
 
   return (
@@ -49,7 +63,7 @@ const SignUpPage = () => {
                   className="w-11 h-11"
                   onError={(e) => {
                     e.currentTarget.src = "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736620593/SecureChat_Logo_ntx47p.png";
-                    e.currentTarget.onerror = null; // Prevent infinite loop if Cloudinary URL also fails
+                    e.currentTarget.onerror = null;
                   }}
                 />
               </div>
@@ -69,7 +83,7 @@ const SignUpPage = () => {
                 </div>
                 <input
                   type="text"
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="John Doe"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -87,7 +101,7 @@ const SignUpPage = () => {
                 </div>
                 <input
                   type="email"
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -105,7 +119,7 @@ const SignUpPage = () => {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="Must be at least 6 characters"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -148,7 +162,6 @@ const SignUpPage = () => {
       </div>
 
       {/* right side */}
-
       <AuthImagePattern
         title="Join our community"
         subtitle="Connect with friends, share moments, and stay in touch with your loved ones."
@@ -156,4 +169,5 @@ const SignUpPage = () => {
     </div>
   );
 };
+
 export default SignUpPage;

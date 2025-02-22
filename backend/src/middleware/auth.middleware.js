@@ -22,10 +22,10 @@ export const protectRoute = async (req, res, next) => {
     }
 
     // Check if user is banned
-    if (user.banned) {
+    if (user.isBanned) {
       if (user.suspensionExpiresAt && new Date() > user.suspensionExpiresAt) {
-        // Auto-unban if suspension time is over
-        user.banned = false;
+        // Auto-unban if suspension period has expired
+        user.isBanned = false;
         user.suspensionExpiresAt = null;
         await user.save();
       } else {
@@ -34,10 +34,9 @@ export const protectRoute = async (req, res, next) => {
     }
 
     req.user = user;
-
     next();
   } catch (error) {
-    console.log("Error in protectRoute middleware: ", error.message);
+    console.error("Error in protectRoute middleware:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };

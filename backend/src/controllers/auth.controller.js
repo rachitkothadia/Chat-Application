@@ -22,7 +22,13 @@ export const signup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new User({ fullName, email, password: hashedPassword });
+    const newUser = new User({
+      fullName,
+      email,
+      password: hashedPassword,
+      isBanned: false,
+      suspensionExpiresAt: null,
+    });
 
     await newUser.save();
     generateToken(newUser._id, res);
@@ -34,7 +40,7 @@ export const signup = async (req, res) => {
       profilePic: newUser.profilePic,
     });
   } catch (error) {
-    console.log("Error in signup controller", error.message);
+    console.error("Error in signup controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -49,12 +55,13 @@ export const login = async (req, res) => {
     }
 
     // Check if the user is banned
-    if (user.banned && user.suspensionExpiresAt) {
+    if (user.isBanned && user.suspensionExpiresAt) {
       if (new Date() < user.suspensionExpiresAt) {
+        res.cookie("jwt", "", { httpOnly: true, expires: new Date(0) }); // Force logout
         return res.status(403).json({ message: "You are banned. Try again later." });
       } else {
-        // Unban user if the suspension period is over
-        user.banned = false;
+        // Auto-unban if the suspension period is over
+        user.isBanned = false;
         user.suspensionExpiresAt = null;
         await user.save();
       }
@@ -74,18 +81,45 @@ export const login = async (req, res) => {
       profilePic: user.profilePic,
     });
   } catch (error) {
-    console.log("Error in login controller", error.message);
+    console.error("Error in login controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 export const logout = (req, res) => {
   try {
-    res.cookie("jwt", "", { maxAge: 0 });
+    res.cookie("jwt", "", { httpOnly: true, expires: new Date(0) }); // Expire the JWT
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
-    console.log("Error in logout controller", error.message);
+    console.error("Error in logout controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const banUser = async (req, res) => {
+  const { userId, durationInMinutes } = req.body;
+
+  try {
+    const suspensionTime = new Date();
+    suspensionTime.setMinutes(suspensionTime.getMinutes() + durationInMinutes);
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { suspensionExpiresAt: suspensionTime, isBanned: true },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Log out the banned user by clearing their session
+    res.cookie("jwt", "", { httpOnly: true, expires: new Date(0) });
+
+    res.status(200).json({ message: `User banned for ${durationInMinutes} minutes and logged out.` });
+  } catch (error) {
+    console.error("Error in banning user:", error.message);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -108,7 +142,7 @@ export const updateProfile = async (req, res) => {
 
     res.status(200).json(updatedUser);
   } catch (error) {
-    console.log("Error in update profile:", error.message);
+    console.error("Error in update profile:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -117,7 +151,7 @@ export const checkAuth = (req, res) => {
   try {
     res.status(200).json(req.user);
   } catch (error) {
-    console.log("Error in checkAuth controller", error.message);
+    console.error("Error in checkAuth controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
