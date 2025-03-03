@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberbullying Detection</title>
+    
+    <!-- Google Fonts: Orbitron and Rajdhani for futuristic feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at top center, #2d3a60, #0f1125);
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animation: Starfield */
+        @keyframes starfield {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(0, 50%); }
+        }
+
+        .starfield {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+            animation: starfield 60s linear infinite;
+            opacity: 0.2;
+            top: 0;
+            left: 0;
+        }
+
+        /* Navbar styles */
+        nav {
+            background-color: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00e6ff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+            transition: 0.3s ease-in-out;
+        }
+
+        .navbar-brand:hover {
+            color: #ff00b3;
+            text-shadow: 2px 2px 10px rgba(0, 255, 255, 0.7);
+        }
+
+        /* Container and layout */
+        .container {
+            max-width: 900px;
+            margin-top: 100px;
+            padding: 20px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .header {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #00e6ff;
+            text-align: center;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px #00e6ff, 0 0 10px #00e6ff, 0 0 15px #00e6ff;
+            }
+            100% {
+                text-shadow: 0 0 10px #ff00b3, 0 0 20px #ff00b3, 0 0 30px #ff00b3;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 2px solid #ff00b3;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.4rem;
+            font-family: 'Rajdhani', sans-serif;
+            width: 100%;
+            transition: 0.4s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #00e6ff;
+            box-shadow: 0 0 10px #00e6ff;
+            outline: none;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff00b3, #00e6ff);
+            border: none;
+            padding: 20px;
+            width: 100%;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            color: #121212;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: 0.5s ease-in-out;
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #00e6ff, #ff00b3);
+            box-shadow: 0 0 20px #00e6ff;
+            transform: scale(1.05);
+        }
+
+        /* Result styles */
+        .result {
+            font-size: 2rem;
+            font-weight: 800;
+            padding: 20px;
+            text-align: center;
+            border-radius: 12px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            text-transform: uppercase;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        .bullying {
+            background: rgba(255, 0, 68, 0.8);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255, 0, 68, 0.5);
+        }
+
+        .non-bullying {
+            background: rgba(0, 255, 0, 0.8);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.5);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Loader animation */
+        .loader {
+            border: 8px solid rgba(255, 255, 255, 0.1);
+            border-top: 8px solid #00e6ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        footer {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #bbb;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <center>
+
+        <div class="starfield"></div>
+
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="#">Cyberbullying Detection</a>
+        </nav>
+
+        <div class="container">
+            <div class="header">Cyberbullying Detection</div>
+            
+            <!-- Loader visible during form submission -->
+            <div id="loader" class="loader" style="display: none;"></div>
+
+            <form method="POST" onsubmit="document.getElementById('loader').style.display = 'block';">
+                <div class="form-group">
+                    <textarea name="text" class="form-control" rows="5" placeholder="Enter text to analyze..." required></textarea>
+                </div>
+                <button type="submit" class="btn">Analyze</button>
+            </form>
+
+            {% if prediction is not none %}
+                <div class="result {% if prediction == 1 %}bullying{% else %}non-bullying{% endif %}">
+                    {% if prediction == 1 %}
+                        Bullying Detected
+                    {% else %}
+                        No Bullying Detected
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </center>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

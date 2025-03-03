@@ -33,10 +33,16 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview) return;
 
     try {
-      await sendMessage({
+      const response = await sendMessage({
         text: text.trim(),
         image: imagePreview,
       });
+
+      // ✅ NEW: Check if the message was blocked by the ML API
+      if (response?.error === "Message blocked due to harmful content") {
+        toast.error("Message contains harmful content and was not sent.");
+        return;
+      }
 
       // Clear form
       setText("");
@@ -44,6 +50,7 @@ const MessageInput = () => {
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
+      toast.error("Failed to send message. Please try again.");
     }
   };
 
@@ -106,4 +113,5 @@ const MessageInput = () => {
     </div>
   );
 };
+
 export default MessageInput;
