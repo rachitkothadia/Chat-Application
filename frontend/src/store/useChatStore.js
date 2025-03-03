@@ -37,32 +37,79 @@ export const useChatStore = create((set, get) => ({
 
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
-    
+    const { logout } = useAuthStore.getState();  // ✅ Explicitly get logout function
+    const { authUser } = useAuthStore.getState();
+
+    if (!authUser || !authUser._id) {
+        console.error("❌ ERROR: authUser is missing or invalid!", authUser);
+        toast.error("Authentication error. Please log in again.");
+        if (typeof logout === "function") {
+            await logout();
+            console.log("✅ Logout completed due to missing authUser.");
+        } else {
+            console.error("❌ Logout function is not available!");
+        }
+        return;
+    }
+
     if (!selectedUser || !selectedUser._id) {
-      toast.error("No user selected or invalid recipient!");
-      return;
+        toast.error("No user selected or invalid recipient!");
+        return;
     }
 
     try {
-      // ✅ Step 1: Check if the message is harmful
-      const checkResponse = await axios.post("http://127.0.0.1:5002/predict", 
-        { message: messageData.text },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      
-      console.log("Harmful check response:", checkResponse.data);
+        // ✅ Step 1: Check if the message is harmful
+        const checkResponse = await axios.post("http://127.0.0.1:5002/predict",
+            { message: messageData.text },
+            { headers: { "Content-Type": "application/json" } }
+        );
 
-      if (checkResponse.data.prediction === -1 || checkResponse.data.prediction === 1) {
-        toast.error("⚠️ Message contains harmful content and has been blocked!");
-        return;  // 🚫 Prevent sending if harmful
-      }
+        console.log("🔍 Harmful check response:", checkResponse.data);
 
-      // ✅ Step 2: Send Message if Safe
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      set({ messages: [...messages, res.data] });
+        if (!checkResponse?.data || checkResponse.data.prediction === undefined) {
+            console.error("🚨 ERROR: API response is invalid!", checkResponse);
+            return;
+        }
+
+        console.log("✅ Prediction value:", checkResponse.data.prediction);
+
+        if (checkResponse.data.prediction === 1) {
+            console.warn("⚠️ Message detected as harmful! Executing suspension logic...");
+            toast.error("⚠️ Message contains harmful content! You have been suspended.");
+            console.log("✅ Toast fired!");
+
+            try {
+                console.log("🔄 Sending suspend request to:", `/auth/suspend/${authUser._id}`);
+                const suspendResponse = await axiosInstance.put(`/auth/suspend/${authUser._id}`, { banned: true });
+                console.log("✅ Suspend Response:", suspendResponse.data);
+            } catch (err) {
+                console.error("❌ Failed to suspend user:", err.response?.data || err);
+                toast.error(`Failed to suspend user: ${err.response?.data?.message || "Unknown error"}`);
+                return;
+            }
+
+            console.log("🚪 Calling logout function...");
+            if (typeof logout === "function") {
+                await logout();
+                console.log("✅ Logout function executed!");
+            } else {
+                console.error("❌ Logout function is not defined!");
+            }
+            return;
+        }
+
     } catch (error) {
-      toast.error(error.response?.data?.message || "Error sending message");
+        console.error("❌ Error during harmful message check:", error);
+        toast.error("Error checking message safety. Please try again.");
+        return;
     }
+
+    // ✅ Step 5: Send Message if Safe (Kept Unchanged)
+    console.log("✅ Message is safe, sending...");
+    const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+    console.log("✅ Message sent:", res.data);
+
+    set({ messages: [...messages, res.data] });
   },
 
   subscribeToMessages: () => {

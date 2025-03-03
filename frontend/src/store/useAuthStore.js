@@ -42,20 +42,23 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  login: async (data) => {
-    set({ isLoggingIn: true });
-    try {
-      const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
-      toast.success("Logged in successfully");
+login: async (credentials) => {
+  try {
+    const res = await axiosInstance.post("/auth/login", credentials);
+    const user = res.data;
 
-      get().connectSocket();
-    } catch (error) {
-      toast.error(error.response.data.message);
-    } finally {
-      set({ isLoggingIn: false });
+    if (user.banned) {  // 🚨 Check if the user is banned
+      toast.error("Your account is banned! You cannot log in.");
+      return;
     }
-  },
+
+    set({ authUser: user });
+    toast.success("Login successful!");
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Login failed");
+  }
+},
+
 
   logout: async () => {
     try {
