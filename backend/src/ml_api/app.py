@@ -32,7 +32,7 @@ def predict():
     # Preprocess and transform input text
     processed_message = preprocess_text(message)
     message_vector = vectorizer.transform([processed_message])
-    
+
     # Predict
     prediction = model.predict(message_vector)[0]  # -1 for harmful, 0 for safe
 

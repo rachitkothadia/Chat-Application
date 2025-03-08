@@ -4,9 +4,10 @@ import { useAuthStore } from "../store/useAuthStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users } from "lucide-react";
 
-const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+const DEFAULT_PROFILE_PIC = "https://res.cloudinary.com/dzlsiekwa/image/upload/v1736102383/lol_crop2_tfvbgh.png";
 
+const Sidebar = () => {
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, unreadMessages, clearUnreadMessages } = useChatStore();
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
@@ -27,7 +28,7 @@ const Sidebar = () => {
           <Users className="size-6" />
           <span className="font-medium hidden lg:block">Contacts</span>
         </div>
-        {/* TODO: Online filter toggle */}
+
         <div className="mt-3 hidden lg:flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
@@ -46,16 +47,19 @@ const Sidebar = () => {
         {filteredUsers.map((user) => (
           <button
             key={user._id}
-            onClick={() => setSelectedUser(user)}
+            onClick={() => {
+              setSelectedUser(user);
+              clearUnreadMessages(user._id);
+            }}
             className={`
               w-full p-3 flex items-center gap-3
-              hover:bg-base-300 transition-colors
+              hover:bg-base-200 transition-colors
               ${selectedUser?._id === user._id ? "bg-base-300 ring-1 ring-base-300" : ""}
             `}
           >
             <div className="relative mx-auto lg:mx-0">
               <img
-                src={user.profilePic || "/avatar.png"}
+                src={user.profilePic || DEFAULT_PROFILE_PIC}
                 alt={user.name}
                 className="size-12 object-cover rounded-full"
               />
@@ -65,9 +69,17 @@ const Sidebar = () => {
                   rounded-full ring-2 ring-zinc-900"
                 />
               )}
+              {unreadMessages[user._id] > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 flex items-center justify-center
+                  text-xs text-white font-bold bg-green-700 rounded-full w-5 h-5
+                  ring-2 ring-zinc-900 z-10"
+                >
+                  {unreadMessages[user._id] > 9 ? "9+" : unreadMessages[user._id]}
+                </span>
+              )}
             </div>
 
-            {/* User info - only visible on larger screens */}
             <div className="hidden lg:block text-left min-w-0">
               <div className="font-medium truncate">{user.fullName}</div>
               <div className="text-sm text-zinc-400">
@@ -84,4 +96,5 @@ const Sidebar = () => {
     </aside>
   );
 };
+
 export default Sidebar;

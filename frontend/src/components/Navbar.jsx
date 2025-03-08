@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
@@ -14,10 +14,14 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-all">
-              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-primary" />
+              <div className="size-13 rounded-lg bg-primary/10 flex items-center justify-center">
+              <img
+                src="https://res.cloudinary.com/dzlsiekwa/image/upload/v1736620593/SecureChat_Logo_ntx47p.png"
+                alt="SecureChat Logo"
+                className="w-10 h-10"
+              />
               </div>
-              <h1 className="text-lg font-bold">Secure Chat</h1>
+              <h1 className="text-lg font-bold">SecureChat</h1>
             </Link>
           </div>
 
